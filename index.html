@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --bg:#07090f;
@@ -20,6 +21,7 @@
   --accent2:#a78bfa;
   --win:#34d399;
   --lose:#f87171;
+  --gА:#22d3ee; --gБ:#a78bfa; --gВ:#fbbf24; --gГ:#34d399;
   --gA:#22d3ee; --gB:#a78bfa; --gV:#fbbf24; --gG:#34d399;
   --radius:18px;
   --font-head:'Unbounded',system-ui,sans-serif;
@@ -56,7 +58,7 @@ header.app{
   padding:14px 0 0;
   margin:0 -16px;padding-left:16px;padding-right:16px;
 }
-.brand{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.brand{display:flex;align-items:flex-start;gap:12px;justify-content:space-between;flex-wrap:wrap}
 h1.logo{
   font-family:var(--font-head);font-weight:600;font-size:clamp(15px,2.6vw,22px);
   letter-spacing:.5px;line-height:1.35;
@@ -70,9 +72,15 @@ h1.logo .logo-sub{
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
   text-transform:none;
 }
+.hright{display:flex;align-items:center;gap:10px;flex-shrink:0;padding-top:4px}
 .live-dot{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--win);letter-spacing:1.5px}
 .live-dot i{width:9px;height:9px;border-radius:50%;background:var(--win);animation:pulse 1.6s infinite}
+.live-dot.off{color:var(--muted)}
+.live-dot.off i{background:var(--muted);animation:none}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.55)}70%{box-shadow:0 0 0 9px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+.lockbtn{appearance:none;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:12px;font-weight:700;padding:7px 12px;border-radius:99px;cursor:pointer;font-family:var(--font-body);transition:all .2s;white-space:nowrap}
+.lockbtn:hover{color:var(--text);border-color:var(--border-strong)}
+.lockbtn.org{color:#04131a;background:linear-gradient(92deg,#fde68a,#fbbf24);border-color:transparent}
 nav.tabs{display:flex;gap:4px;margin-top:12px;overflow-x:auto;scrollbar-width:none}
 nav.tabs::-webkit-scrollbar{display:none}
 nav.tabs button{
@@ -86,7 +94,7 @@ nav.tabs button.on{color:var(--text);border-image:linear-gradient(90deg,var(--ac
 section.view{display:none;animation:fadeUp .35s ease both}
 section.view.on{display:block}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-h2.sec{font-family:var(--font-head);font-size:clamp(16px,2.6vw,21px);font-weight:600;margin:26px 0 14px;display:flex;align-items:center;gap:10px}
+h2.sec{font-family:var(--font-head);font-size:clamp(16px,2.6vw,21px);font-weight:600;margin:26px 0 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 h2.sec small{font-family:var(--font-body);font-weight:600;color:var(--muted);font-size:13px}
 
 /* ---- cards ---- */
@@ -94,6 +102,16 @@ h2.sec small{font-family:var(--font-body);font-weight:600;color:var(--muted);fon
   background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
 }
+/* ---- countdown ---- */
+.cd{margin-top:18px;padding:22px 18px;text-align:center;position:relative;overflow:hidden}
+.cd::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% -40%,rgba(251,191,36,.14),transparent 60%);pointer-events:none}
+.cd .cdl{font-size:11px;font-weight:800;letter-spacing:3px;color:var(--gV);margin-bottom:14px}
+.cd .digits{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.cd .dbox{min-width:74px;padding:12px 10px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--border-strong)}
+.cd .dbox b{display:block;font-family:var(--font-head);font-weight:800;font-size:clamp(24px,5vw,36px);background:linear-gradient(92deg,#67e8f9,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-variant-numeric:tabular-nums}
+.cd .dbox span{font-size:10px;font-weight:800;letter-spacing:2px;color:var(--muted)}
+.cd .cdedit{margin-top:12px}
+@media (max-width:480px){.cd .dbox{min-width:64px}}
 /* ---- hero next matches ---- */
 .hero{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
 @media (max-width:760px){.hero{grid-template-columns:1fr}}
@@ -158,6 +176,12 @@ h2.sec small{font-family:var(--font-body);font-weight:600;color:var(--muted);fon
 .badge-next{font-size:9.5px;font-weight:800;letter-spacing:1.5px;color:#031318;background:linear-gradient(90deg,#22d3ee,#67e8f9);padding:3px 8px;border-radius:99px}
 .match.played{opacity:.92}
 .match .time{font-size:11px;color:var(--muted);font-weight:600}
+.sharebtn{
+  appearance:none;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--muted);
+  width:32px;height:32px;border-radius:10px;cursor:pointer;font-size:14px;flex-shrink:0;
+  transition:all .2s;display:inline-flex;align-items:center;justify-content:center;
+}
+.sharebtn:hover{color:var(--text);border-color:var(--border-strong);transform:translateY(-1px)}
 
 /* ---- standings ---- */
 .statbar{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
@@ -220,7 +244,7 @@ table.st .diff.pos-d{color:var(--win)} table.st .diff.neg-d{color:var(--lose)}
 .pmatch .row.w .nm,.pmatch .row.w .sc{color:var(--win)}
 .pmatch .row .seedchip{font-size:9px;font-weight:800;padding:2px 6px;border-radius:99px;background:rgba(255,255,255,.08);color:var(--muted);flex-shrink:0}
 .pmatch .lbl{position:absolute;top:-9px;left:12px;font-size:9.5px;font-weight:800;letter-spacing:1px;background:var(--bg);color:var(--muted);padding:1px 8px;border-radius:99px;border:1px solid var(--border)}
-.pmatch .setsline{font-size:10.5px;color:var(--muted);padding:4px 2px 0;border-top:1px dashed rgba(255,255,255,.08);margin-top:4px}
+.pmatch .setsline{font-size:10.5px;color:var(--muted);padding:4px 2px 0;border-top:1px dashed rgba(255,255,255,.08);margin-top:4px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .pmatch.reveal{animation:flipIn .7s cubic-bezier(.2,.9,.3,1.2) both}
 @keyframes flipIn{from{opacity:0;transform:rotateX(80deg) translateY(-14px)}to{opacity:1;transform:none}}
 .champ{margin-top:22px;padding:30px 20px;text-align:center;position:relative;overflow:hidden}
@@ -231,6 +255,30 @@ table.st .diff.pos-d{color:var(--win)} table.st .diff.neg-d{color:var(--lose)}
 .champ .nm{font-family:var(--font-head);font-weight:800;font-size:clamp(22px,5vw,36px);background:linear-gradient(92deg,#fde68a,#fbbf24,#f59e0b);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .podium{display:flex;justify-content:center;gap:20px;margin-top:14px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 .podium b{color:var(--text)}
+
+/* ---- gallery ---- */
+.ghead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:22px;flex-wrap:wrap}
+.gallery{columns:3;column-gap:12px;margin-top:16px}
+@media (max-width:760px){.gallery{columns:2}}
+.gallery .ph{
+  break-inside:avoid;margin-bottom:12px;border-radius:16px;overflow:hidden;cursor:pointer;
+  border:1px solid var(--border);position:relative;background:var(--card);
+  animation:fadeUp .4s ease both;
+}
+.gallery .ph img{display:block;width:100%;height:auto;transition:transform .35s ease}
+.gallery .ph:hover img{transform:scale(1.04)}
+.gallery .ph .pt{position:absolute;bottom:0;left:0;right:0;padding:18px 10px 8px;font-size:10.5px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65));opacity:0;transition:opacity .25s}
+.gallery .ph:hover .pt{opacity:1}
+.gempty{padding:44px 20px;text-align:center;color:var(--muted);margin-top:16px;font-weight:600}
+.gempty .e{font-size:38px;margin-bottom:10px}
+#lightbox{
+  position:fixed;inset:0;z-index:150;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px;
+  background:rgba(2,4,10,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:20px;
+}
+#lightbox.on{display:flex}
+#lightbox img{max-width:100%;max-height:78vh;border-radius:18px;border:1px solid var(--border-strong);box-shadow:0 30px 80px -20px rgba(0,0,0,.8)}
+#lightbox .lb-meta{color:var(--muted);font-size:12px;font-weight:600}
+#lightbox .lb-btns{display:flex;gap:10px}
 
 /* ---- modal ---- */
 .overlay{
@@ -271,6 +319,16 @@ table.st .diff.pos-d{color:var(--win)} table.st .diff.neg-d{color:var(--lose)}
 .mnames{display:grid;grid-template-columns:64px 1fr 26px 1fr;gap:8px;margin-bottom:8px}
 .mnames span{font-size:11px;font-weight:800;color:var(--muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+/* ---- toast ---- */
+#toast{
+  position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);z-index:300;
+  background:#141927;border:1px solid var(--border-strong);color:var(--text);
+  font-size:13px;font-weight:700;padding:12px 20px;border-radius:99px;opacity:0;pointer-events:none;
+  transition:all .3s cubic-bezier(.2,.9,.3,1);box-shadow:0 14px 40px -10px rgba(0,0,0,.6);
+  max-width:90vw;text-align:center;
+}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
 /* ---- footer ---- */
 footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 footer button{appearance:none;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:700;padding:8px 14px;border-radius:99px;cursor:pointer;font-family:var(--font-body);transition:all .2s}
@@ -290,16 +348,21 @@ canvas#fx{position:fixed;inset:0;z-index:200;pointer-events:none}
   <header class="app">
     <div class="brand">
       <h1 class="logo">🏐 Благотворителен волейболен турнир<span class="logo-sub">„В подкрепа на Пепи“ ❤️</span></h1>
-      <span class="live-dot"><i></i>LIVE</span>
+      <div class="hright">
+        <span class="live-dot" id="livedot"><i></i>LIVE</span>
+        <button class="lockbtn" id="lockbtn">🔒</button>
+      </div>
     </div>
     <nav class="tabs">
       <button data-view="program" class="on">Програма</button>
       <button data-view="standings">Класиране</button>
       <button data-view="playoffs">Плейофи</button>
+      <button data-view="gallery">Галерия</button>
     </nav>
   </header>
 
   <section class="view on" id="view-program">
+    <div id="countdown"></div>
     <div class="hero" id="hero"></div>
     <div class="seg" id="courtseg">
       <button data-c="all" class="on">Всички</button>
@@ -318,21 +381,36 @@ canvas#fx{position:fixed;inset:0;z-index:200;pointer-events:none}
     <div id="po"></div>
   </section>
 
+  <section class="view" id="view-gallery">
+    <div class="ghead">
+      <h2 class="sec" style="margin:0">📸 Live галерия <small id="gcount"></small></h2>
+      <button class="btn" id="btn-photo">📷 Добави снимка</button>
+    </div>
+    <div id="gallery"></div>
+  </section>
+
   <footer>
     <button id="btn-export">⬇ Експорт на данни</button>
-    <button id="btn-import">⬆ Импорт</button>
-    <button id="btn-reset" class="warn">🗑 Нулирай турнира</button>
+    <button id="btn-import" style="display:none">⬆ Импорт</button>
+    <button id="btn-reset" class="warn" style="display:none">🗑 Нулирай турнира</button>
   </footer>
 </div>
 
 <div class="overlay" id="overlay">
   <div class="modal" id="modal"></div>
 </div>
+<div id="lightbox"></div>
+<div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" style="display:none">
+<input type="file" id="photoFile" accept="image/*" style="display:none">
 <canvas id="fx"></canvas>
 
 <script>
 'use strict';
+/* ================= CONFIG ================= */
+const SB_URL = 'https://qvrlouadcmaxmqjzlnli.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2cmxvdWFkY21heG1xanpsbmxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNzA4OTMsImV4cCI6MjA5ODY0Njg5M30.vRIn9rOGHzSSA3utfftoWAWJtJJ-hviQxOMrGr7zbwg';
+
 /* ================= DATA ================= */
 const GROUPS = {
   'А': ['Скаутите','Белово','Манчестър Юнайтед','Легендите','Горна Джумая'],
@@ -341,7 +419,6 @@ const GROUPS = {
   'Г': ['Собращина','Авангард','Албанците','БарБароните'],
 };
 const GROUP_ORDER = ['А','Б','В','Г'];
-// [court, no, group, teamA, teamB, time?]
 const SCHEDULE = [
   [1, 1,'А','Скаутите','Белово','09:30'],
   [1, 2,'Г','Собращина','Авангард'],
@@ -382,20 +459,7 @@ const PO_ROUNDS = {
   sf:[{id:'sf1',lbl:'ПФ 1'},{id:'sf2',lbl:'ПФ 2'}],
   fin:[{id:'bronze',lbl:'3-ТО МЯСТО'},{id:'final',lbl:'ФИНАЛ'}],
 };
-
-/* ================= STATE ================= */
-const LS_KEY = 'volley-tournament-v1';
-let state = loadState();
-function loadState(){
-  try{
-    const raw = localStorage.getItem(LS_KEY);
-    if(raw){ const s = JSON.parse(raw); if(s && s.results) return s; }
-  }catch(e){}
-  return { results:{}, po:{ draw:null, results:{} } };
-}
-function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
-
-let ui = { view:'program', courtFilter:'all', animateDraw:false, champCelebrated:false };
+const PO_ALL = [...PO_ROUNDS.qf,...PO_ROUNDS.sf,...PO_ROUNDS.fin];
 
 /* ================= HELPERS ================= */
 const $ = s => document.querySelector(s);
@@ -404,6 +468,131 @@ const slug = s => 't'+[...String(s)].map(c=>c.codePointAt(0).toString(36)).join(
 function setsWon(sets){ let a=0,b=0; for(const s of sets){ if(s.a>s.b)a++; else if(s.b>s.a)b++; } return {a,b}; }
 function winnerSide(res){ if(!res) return null; const w=setsWon(res.sets); return w.a>=2?'a':(w.b>=2?'b':null); }
 function setsLine(sets){ return sets.map(s=>`${s.a}:${s.b}`).join(' · '); }
+let toastTimer=null;
+function toast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('on'),2600);
+}
+
+/* ================= STATE & CLOUD ================= */
+let orgPin = localStorage.getItem('vt-pin') || '';
+let sbc = makeClient(orgPin);
+let rtChannel = null;
+function makeClient(pin){
+  const opts = pin ? {global:{headers:{'x-pin':pin}}} : {};
+  return window.supabase.createClient(SB_URL, SB_KEY, opts);
+}
+const isOrg = () => !!orgPin;
+
+let state = { results:{}, po:{ draw:null, results:{} }, startAt:null };
+let photos = [];
+let cloudOk = false;
+let ui = { courtFilter:'all', animateDraw:false, champCelebrated:false };
+
+const MIRROR_KEY = 'vt-cache-v2';
+function saveMirror(){ try{ localStorage.setItem(MIRROR_KEY, JSON.stringify({results:state.results, po:state.po, startAt:state.startAt})); }catch(e){} }
+function loadMirror(){
+  try{
+    const raw = localStorage.getItem(MIRROR_KEY);
+    if(raw){ const s = JSON.parse(raw); if(s && s.results){ state.results=s.results; state.po=s.po||{draw:null,results:{}}; state.startAt=s.startAt||null; } }
+  }catch(e){}
+}
+
+function setLive(ok){
+  cloudOk = ok;
+  const d = $('#livedot');
+  if(ok){ d.className='live-dot'; d.innerHTML='<i></i>LIVE'; }
+  else { d.className='live-dot off'; d.innerHTML='<i></i>ОФЛАЙН'; }
+}
+
+async function cloudLoad(){
+  const [m,s,p] = await Promise.all([
+    sbc.from('matches').select('*'),
+    sbc.from('state').select('*'),
+    sbc.from('photos').select('*').order('created_at',{ascending:false}).limit(400),
+  ]);
+  if(m.error||s.error||p.error) throw (m.error||s.error||p.error);
+  state.results = {}; state.po = {draw:state.po.draw, results:{}}; state.po.draw = null;
+  for(const row of m.data){
+    if(row.kind==='group') state.results[row.id] = {sets:row.sets};
+    else state.po.results[row.id] = {sets:row.sets, a:row.a, b:row.b};
+  }
+  state.startAt = null;
+  for(const row of s.data){
+    if(row.key==='po_draw') state.po.draw = row.value;
+    if(row.key==='start_at') state.startAt = row.value;
+  }
+  photos = p.data;
+}
+
+let rtGen = 0;
+function subscribeRT(){
+  if(rtChannel){ try{ rtChannel.unsubscribe(); }catch(e){} rtChannel=null; }
+  const gen = ++rtGen;
+  const ch = sbc.channel('rt-'+gen)
+    .on('postgres_changes',{event:'*',schema:'public',table:'matches'},pl=>{
+      if(pl.eventType==='DELETE'){ delete state.results[pl.old.id]; delete state.po.results[pl.old.id]; }
+      else {
+        const r = pl.new;
+        if(r.kind==='group') state.results[r.id]={sets:r.sets};
+        else state.po.results[r.id]={sets:r.sets,a:r.a,b:r.b};
+      }
+      saveMirror(); render({smooth:true});
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'state'},pl=>{
+      const key = pl.eventType==='DELETE'? pl.old.key : pl.new.key;
+      const val = pl.eventType==='DELETE'? null : pl.new.value;
+      if(key==='po_draw') state.po.draw = val;
+      if(key==='start_at') state.startAt = val;
+      saveMirror(); render({smooth:true});
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'photos'},pl=>{
+      if(pl.eventType==='INSERT'){ if(!photos.some(x=>x.id===pl.new.id)) photos.unshift(pl.new); }
+      if(pl.eventType==='DELETE'){ photos = photos.filter(x=>x.id!==pl.old.id); }
+      renderGallery();
+    })
+    .subscribe(status=>{
+      if(gen!==rtGen) return;
+      if(status==='SUBSCRIBED') setLive(true);
+      if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){ setLive(false); setTimeout(()=>{ if(gen===rtGen) subscribeRT(); }, 3000); }
+    });
+  rtChannel = ch;
+  // watchdog: if the join hangs (connect race), retry once
+  setTimeout(()=>{ if(gen===rtGen && ch.state!=='joined') subscribeRT(); }, 6000);
+}
+
+/* periodic + on-focus reconciliation (belt and braces for flaky venue internet) */
+let refreshing = false;
+async function refresh(){
+  if(refreshing) return;
+  refreshing = true;
+  try{ await cloudLoad(); setLive(true); saveMirror(); render(); }
+  catch(e){ setLive(false); }
+  finally{ refreshing = false; }
+}
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) refresh(); });
+setInterval(()=>{ if(!document.hidden) refresh(); }, 45000);
+
+function cloudError(e){
+  console.error(e);
+  if(e && (e.code==='42501' || String(e.message||'').includes('policy'))){
+    toast('⛔ Грешен PIN — нямаш права за запис');
+  } else {
+    toast('⚠️ Грешка при запис — провери интернет връзката');
+  }
+}
+async function cloudUpsertMatch(id, kind, sets, a, b){
+  const {error} = await sbc.from('matches').upsert({id, kind, sets, a:a??null, b:b??null});
+  if(error) cloudError(error);
+}
+async function cloudDeleteMatch(id){
+  const {error} = await sbc.from('matches').delete().eq('id',id);
+  if(error) cloudError(error);
+}
+async function cloudSetState(key, value){
+  const {error} = await sbc.from('state').upsert({key, value});
+  if(error) cloudError(error);
+}
 
 /* ================= STANDINGS ================= */
 function computeStandings(group){
@@ -466,34 +655,98 @@ function poParticipants(id){
   if(!d) return {a:null,b:null};
   const qi = {qf1:0,qf2:2,qf3:4,qf4:6};
   if(id in qi) return {a:d[qi[id]], b:d[qi[id]+1], ph:['','']};
-  const wrap = (t,ph) => t? {team:t,seed:null} : null;
+  const wrap = t => t? {team:t,seed:null} : null;
   if(id==='sf1') return {a:wrap(poWinner('qf1')), b:wrap(poWinner('qf2')), ph:['Победител ЧФ1','Победител ЧФ2']};
   if(id==='sf2') return {a:wrap(poWinner('qf3')), b:wrap(poWinner('qf4')), ph:['Победител ЧФ3','Победител ЧФ4']};
   if(id==='bronze') return {a:wrap(poLoser('sf1')), b:wrap(poLoser('sf2')), ph:['Загубил ПФ1','Загубил ПФ2']};
   if(id==='final') return {a:wrap(poWinner('sf1')), b:wrap(poWinner('sf2')), ph:['Победител ПФ1','Победител ПФ2']};
   return {a:null,b:null,ph:['','']};
 }
-// clear downstream results whose participants no longer match
 function cleanupPO(){
   if(!state.po.draw) return;
   for(const id of ['qf1','qf2','qf3','qf4','sf1','sf2','bronze','final']){
     const r = state.po.results[id]; if(!r) continue;
     const p = poParticipants(id);
-    if(!p.a || !p.b || p.a.team!==r.a || p.b.team!==r.b) delete state.po.results[id];
+    if(!p.a || !p.b || p.a.team!==r.a || p.b.team!==r.b){
+      delete state.po.results[id];
+      if(isOrg() && cloudOk) cloudDeleteMatch(id);
+    }
   }
 }
 
 /* ================= RENDER ================= */
 function render(opts={}){
-  cleanupPO(); saveState();
-  const doRender = ()=>{ renderHero(); renderCourts(); renderStandings(); renderPlayoffs(); };
+  cleanupPO(); saveMirror();
+  const doRender = ()=>{ renderCountdown(); renderHero(); renderCourts(); renderStandings(); renderPlayoffs(); renderGallery(); renderChrome(); };
   if(opts.smooth && document.startViewTransition){ document.startViewTransition(doRender); }
   else doRender();
 }
-
-function nextMatches(court){
-  return SCHEDULE.filter(m=>m.court===court && !state.results[m.id]);
+function renderChrome(){
+  const lb = $('#lockbtn');
+  if(isOrg()){ lb.className='lockbtn org'; lb.textContent='🔑 ОРГАНИЗАТОР'; }
+  else { lb.className='lockbtn'; lb.textContent='🔒'; }
+  $('#btn-import').style.display = isOrg()? '' : 'none';
+  $('#btn-reset').style.display = isOrg()? '' : 'none';
 }
+
+/* ---- countdown ---- */
+function renderCountdown(){
+  const el = $('#countdown');
+  const t = state.startAt? new Date(state.startAt) : null;
+  const future = t && t.getTime() > Date.now();
+  if(!future){
+    el.innerHTML = isOrg() && playedCount()===0
+      ? `<div style="margin-top:16px;text-align:center"><button class="btn ghost" id="cd-set">⏱ Задай начален час за отброяване</button></div>`
+      : '';
+  } else {
+    el.innerHTML = `<div class="card cd">
+      <div class="cdl">❤️ ДО ПЪРВИЯ СЕРВИС ОСТАВАТ</div>
+      <div class="digits">
+        <div class="dbox"><b id="cd-d">–</b><span>ДНИ</span></div>
+        <div class="dbox"><b id="cd-h">–</b><span>ЧАСА</span></div>
+        <div class="dbox"><b id="cd-m">–</b><span>МИН</span></div>
+        <div class="dbox"><b id="cd-s">–</b><span>СЕК</span></div>
+      </div>
+      ${isOrg()?'<div class="cdedit"><button class="btn ghost" id="cd-set" style="padding:8px 16px;font-size:12px">⏱ Промени</button></div>':''}
+    </div>`;
+    tickCountdown();
+  }
+  const btn = $('#cd-set');
+  if(btn) btn.addEventListener('click',()=>{
+    const cur = state.startAt? new Date(state.startAt) : null;
+    const def = cur? `${String(cur.getDate()).padStart(2,'0')}.${String(cur.getMonth()+1).padStart(2,'0')}.${cur.getFullYear()} ${String(cur.getHours()).padStart(2,'0')}:${String(cur.getMinutes()).padStart(2,'0')}` : '05.07.2026 09:30';
+    const inp = prompt('Кога започва турнирът? (ДД.ММ.ГГГГ ЧЧ:ММ)', def);
+    if(!inp) return;
+    const m = inp.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2}):(\d{2})$/);
+    if(!m){ toast('Невалиден формат — пример: 05.07.2026 09:30'); return; }
+    const dt = new Date(+m[3], +m[2]-1, +m[1], +m[4], +m[5]);
+    state.startAt = dt.toISOString();
+    cloudSetState('start_at', state.startAt);
+    saveMirror(); render();
+  });
+}
+function tickCountdown(){
+  const t = state.startAt? new Date(state.startAt).getTime() : 0;
+  const el = $('#cd-d'); if(!el) return;
+  let diff = Math.max(0, t - Date.now());
+  const d = Math.floor(diff/86400000); diff%=86400000;
+  const h = Math.floor(diff/3600000); diff%=3600000;
+  const mi = Math.floor(diff/60000);
+  const s = Math.floor(diff%60000/1000);
+  el.textContent = String(d).padStart(2,'0');
+  $('#cd-h').textContent = String(h).padStart(2,'0');
+  $('#cd-m').textContent = String(mi).padStart(2,'0');
+  $('#cd-s').textContent = String(s).padStart(2,'0');
+}
+setInterval(()=>{
+  if(!state.startAt) return;
+  const t = new Date(state.startAt).getTime();
+  if(t <= Date.now()){ if($('#cd-d')) renderCountdown(); return; }
+  tickCountdown();
+},1000);
+
+/* ---- program ---- */
+function nextMatches(court){ return SCHEDULE.filter(m=>m.court===court && !state.results[m.id]); }
 function renderHero(){
   const hero = $('#hero');
   hero.innerHTML = [1,2].map(c=>{
@@ -506,14 +759,14 @@ function renderHero(){
       </div>`;
     }
     const n = up[0], after = up[1];
-    return `<div class="card next-card" data-open="${n.id}" style="cursor:pointer">
+    return `<div class="card next-card" data-open="${n.id}" style="cursor:${isOrg()?'pointer':'default'}">
       <div class="tag"><i></i>СЛЕДВА</div>
       <div class="court-name">Игрище ${c} · Мач №${n.no} · Група ${n.group}${n.time? ' · '+n.time:''}</div>
       <div class="vs">${esc(n.a)}<em>vs</em>${esc(n.b)}</div>
       <div class="after">${after? `После: <b>${esc(after.a)} — ${esc(after.b)}</b> <span class="chip g${after.group}" style="margin-left:4px">${after.group}</span>` : 'Това е последният мач на игрището'}</div>
     </div>`;
   }).join('');
-  hero.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>openModal({kind:'group',id:el.dataset.open})));
+  if(isOrg()) hero.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>openModal({kind:'group',id:el.dataset.open})));
 }
 
 function renderCourts(){
@@ -538,7 +791,7 @@ function renderCourts(){
             if(w.a>w.b) wa='w'; else wb='w';
             right = `<div class="big">${w.a}:${w.b}</div><div class="setsline">${setsLine(res.sets)}</div>`;
           } else {
-            right = `<div class="enter">Въведи ›</div>${m.time?`<div class="time">${m.time}</div>`:''}`;
+            right = isOrg()? `<div class="enter">Въведи ›</div>${m.time?`<div class="time">${m.time}</div>`:''}` : (m.time?`<div class="time">${m.time}</div>`:'');
           }
           return `<div class="match ${res?'played':''} ${isNext?'next-up':''}" data-open="${m.id}">
             <div class="no">${m.no}</div>
@@ -549,12 +802,21 @@ function renderCourts(){
             </div>
             ${isNext?'<span class="badge-next">СЛЕДВА</span>':''}
             <div class="score">${right}</div>
+            ${res?`<button class="sharebtn" data-share="${m.id}" title="Сподели резултата">📤</button>`:''}
           </div>`;
         }).join('')}
       </div>
     </div>`;
   }).join('');
-  wrap.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>openModal({kind:'group',id:el.dataset.open})));
+  wrap.querySelectorAll('[data-share]').forEach(el=>el.addEventListener('click',e=>{
+    e.stopPropagation(); shareCard({kind:'group',id:el.dataset.share});
+  }));
+  wrap.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>{
+    const id = el.dataset.open;
+    if(isOrg()) openModal({kind:'group',id});
+    else if(state.results[id]) shareCard({kind:'group',id});
+    else toast('🔒 Резултатите въвежда организаторът');
+  }));
 }
 
 function renderStandings(){
@@ -613,15 +875,15 @@ function renderPlayoffs(){
           <div class="seed" style="color:var(--g${q.group})">${q.seed}</div>
           <div class="nm">${esc(q.team)}</div>
         </div>`).join('')}</div>
-        <div style="text-align:center;margin-top:22px">
+        ${isOrg()?`<div style="text-align:center;margin-top:22px">
           <button class="btn" id="btn-draw">🎲 Изтегли жребий за плейофите</button>
-        </div>`;
+        </div>`:'<div style="margin-top:18px;color:var(--muted);font-size:13px;font-weight:600">Организаторът ще изтегли жребия всеки момент…</div>'}`;
     }
     po.innerHTML = `<div class="card po-lock">
       <div class="pct">${played} / 32</div>
       <div style="color:var(--muted);font-size:13px;font-weight:600;margin-top:4px">${done? 'Груповата фаза приключи! Ето класиралите се:' : 'Плейофите се отключват след края на груповата фаза'}</div>
       <div class="progress"><i style="width:${played/32*100}%"></i></div>
-      ${!done && played>0 ? `<div style="margin-top:14px"><button class="btn ghost" id="btn-draw-force">Изтегли жребий предварително (текущо класиране)</button></div>`:''}
+      ${!done && played>0 && isOrg() ? `<div style="margin-top:14px"><button class="btn ghost" id="btn-draw-force">Изтегли жребий предварително (текущо класиране)</button></div>`:''}
       ${qualiHtml}
     </div>`;
     const drawBtn = po.querySelector('#btn-draw') || po.querySelector('#btn-draw-force');
@@ -629,14 +891,15 @@ function renderPlayoffs(){
       if(!done && !confirm('Груповата фаза не е приключила — жребият ще ползва ТЕКУЩОТО класиране. Продължаваме?')) return;
       state.po.draw = makeDraw();
       state.po.results = {};
+      cloudSetState('po_draw', state.po.draw);
+      sbc.from('matches').delete().eq('kind','po').then(({error})=>{ if(error) cloudError(error); });
       ui.animateDraw = true;
-      saveState(); render();
+      saveMirror(); render();
       setTimeout(()=>confettiBurst(1.2), 900);
     });
     return;
   }
 
-  // bracket
   const hasPoResults = Object.keys(state.po.results).length>0;
   const finalW = poWinner('final');
   const bronzeW = poWinner('bronze');
@@ -654,12 +917,12 @@ function renderPlayoffs(){
         <span class="sc">${sw? (side==='a'?sw.a:sw.b) : ''}</span>
       </div>`;
     };
-    const clickable = p.a && p.b;
-    return `<div class="card pmatch ${clickable?'':'tbd'} ${ui.animateDraw?'reveal':''}" ${clickable?`data-po="${id}"`:''} style="${ui.animateDraw?`animation-delay:${idx*0.18}s`:''}">
+    const clickable = p.a && p.b && (isOrg() || r);
+    return `<div class="card pmatch ${p.a&&p.b?'':'tbd'} ${ui.animateDraw?'reveal':''}" ${clickable?`data-po="${id}"`:''} style="${ui.animateDraw?`animation-delay:${idx*0.18}s`:''}">
       <span class="lbl">${lbl}</span>
       ${row(p.a,p.ph?p.ph[0]:'—','a')}
       ${row(p.b,p.ph?p.ph[1]:'—','b')}
-      ${r?`<div class="setsline">${setsLine(r.sets)}</div>`:''}
+      ${r?`<div class="setsline"><span>${setsLine(r.sets)}</span><button class="sharebtn" data-share-po="${id}" title="Сподели" style="width:26px;height:26px;font-size:12px">📤</button></div>`:''}
     </div>`;
   };
 
@@ -680,25 +943,195 @@ function renderPlayoffs(){
           ${bronzeW?`<span>🥉 <b>${esc(bronzeW)}</b></span>`:''}
         </div>
       </div>`:''}
-    <div style="text-align:center;margin-top:24px">
+    ${isOrg()?`<div style="text-align:center;margin-top:24px">
       <button class="btn ghost" id="btn-redraw">🎲 Нов жребий</button>
-    </div>`;
+    </div>`:''}`;
   ui.animateDraw = false;
 
-  po.querySelectorAll('[data-po]').forEach(el=>el.addEventListener('click',()=>openModal({kind:'po',id:el.dataset.po})));
-  po.querySelector('#btn-redraw').addEventListener('click',()=>{
+  po.querySelectorAll('[data-share-po]').forEach(el=>el.addEventListener('click',e=>{
+    e.stopPropagation(); shareCard({kind:'po',id:el.dataset.sharePo});
+  }));
+  po.querySelectorAll('[data-po]').forEach(el=>el.addEventListener('click',()=>{
+    const id = el.dataset.po;
+    if(isOrg()) openModal({kind:'po',id});
+    else if(state.po.results[id]) shareCard({kind:'po',id});
+  }));
+  const rd = po.querySelector('#btn-redraw');
+  if(rd) rd.addEventListener('click',()=>{
     if(hasPoResults && !confirm('Новият жребий ще изтрие всички въведени плейофни резултати. Сигурен ли си?')) return;
     state.po.draw = makeDraw();
     state.po.results = {};
+    cloudSetState('po_draw', state.po.draw);
+    sbc.from('matches').delete().eq('kind','po').then(({error})=>{ if(error) cloudError(error); });
     ui.animateDraw = true;
-    saveState(); render();
+    saveMirror(); render();
   });
 
   if(finalW && !ui.champCelebrated){ ui.champCelebrated = true; confettiBurst(2.5); }
 }
 
-/* ================= MODAL ================= */
+/* ================= GALLERY ================= */
+const photoUrl = p => `${SB_URL}/storage/v1/object/public/photos/${p}`;
+function renderGallery(){
+  $('#gcount').textContent = photos.length? `${photos.length} ${photos.length===1?'снимка':'снимки'}` : '';
+  const g = $('#gallery');
+  if(!photos.length){
+    g.className='';
+    g.innerHTML = `<div class="card gempty"><div class="e">📷</div>Още няма снимки от турнира.<br>Бъди първият — качи снимка как играят отборите!</div>`;
+    return;
+  }
+  g.className='gallery';
+  g.innerHTML = photos.map(p=>`
+    <div class="ph" data-lb="${p.id}">
+      <img src="${photoUrl(esc(p.path))}" loading="lazy" alt="Снимка от турнира">
+      <div class="pt">${new Date(p.created_at).toLocaleTimeString('bg',{hour:'2-digit',minute:'2-digit'})} · ${new Date(p.created_at).toLocaleDateString('bg')}</div>
+    </div>`).join('');
+  g.querySelectorAll('[data-lb]').forEach(el=>el.addEventListener('click',()=>openLightbox(el.dataset.lb)));
+}
+function openLightbox(id){
+  const p = photos.find(x=>x.id===id); if(!p) return;
+  const lb = $('#lightbox');
+  lb.innerHTML = `
+    <img src="${photoUrl(esc(p.path))}" alt="">
+    <div class="lb-meta">📸 ${new Date(p.created_at).toLocaleString('bg')}</div>
+    <div class="lb-btns">
+      <button class="btn ghost" id="lb-close">Затвори ✕</button>
+      ${isOrg()?`<button class="btn danger" id="lb-del">Изтрий</button>`:''}
+    </div>`;
+  lb.classList.add('on');
+  document.body.style.overflow='hidden';
+  const close = ()=>{ lb.classList.remove('on'); document.body.style.overflow=''; };
+  $('#lb-close').addEventListener('click',close);
+  lb.addEventListener('click',e=>{ if(e.target===lb) close(); },{once:true});
+  const del = $('#lb-del');
+  if(del) del.addEventListener('click',async ()=>{
+    if(!confirm('Изтриване на снимката?')) return;
+    const {error} = await sbc.from('photos').delete().eq('id',p.id);
+    if(error){ cloudError(error); return; }
+    try{ await sbc.storage.from('photos').remove([p.path]); }catch(e){}
+    photos = photos.filter(x=>x.id!==p.id);
+    close(); renderGallery();
+  });
+}
+function loadImgFile(file){
+  return new Promise((res,rej)=>{
+    const u = URL.createObjectURL(file);
+    const i = new Image();
+    i.onload = ()=>res(i);
+    i.onerror = rej;
+    i.src = u;
+  });
+}
+async function compressImage(file){
+  const img = await loadImgFile(file);
+  const MAX = 1600;
+  const scale = Math.min(1, MAX/Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.naturalWidth*scale);
+  c.height = Math.round(img.naturalHeight*scale);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return new Promise(res=>c.toBlob(res,'image/jpeg',.82));
+}
+$('#btn-photo').addEventListener('click',()=>$('#photoFile').click());
+$('#photoFile').addEventListener('change',async e=>{
+  const f = e.target.files[0]; e.target.value='';
+  if(!f) return;
+  const btn = $('#btn-photo');
+  btn.disabled = true; btn.textContent = '⏳ Качване…';
+  try{
+    const blob = await compressImage(f);
+    const path = `p${Date.now()}-${Math.random().toString(36).slice(2,8)}.jpg`;
+    const up = await sbc.storage.from('photos').upload(path, blob, {contentType:'image/jpeg'});
+    if(up.error) throw up.error;
+    const ins = await sbc.from('photos').insert({path}).select().single();
+    if(ins.error) throw ins.error;
+    if(!photos.some(x=>x.id===ins.data.id)) photos.unshift(ins.data);
+    renderGallery();
+    toast('📸 Снимката е качена!');
+    confettiBurst(.5);
+  }catch(err){
+    console.error(err);
+    toast('⚠️ Качването не успя — провери връзката');
+  }finally{
+    btn.disabled = false; btn.textContent = '📷 Добави снимка';
+  }
+});
+
+/* ================= SHARE CARDS ================= */
+async function shareCard(ref){
+  let a,b,res,label;
+  if(ref.kind==='group'){
+    const m = SCHEDULE.find(x=>x.id===ref.id);
+    a=m.a; b=m.b; res=state.results[ref.id];
+    label = `ГРУПА ${m.group} · МАЧ №${m.no}`;
+  } else {
+    res = state.po.results[ref.id];
+    if(!res) return;
+    a=res.a; b=res.b;
+    label = `ПЛЕЙОФИ · ${PO_ALL.find(x=>x.id===ref.id).lbl}`;
+  }
+  if(!res) return;
+  try{ await document.fonts.load('800 60px Unbounded'); await document.fonts.load('600 26px Unbounded'); }catch(e){}
+  const w = setsWon(res.sets);
+  const c = document.createElement('canvas'); c.width=1080; c.height=1080;
+  const x = c.getContext('2d');
+  x.fillStyle = '#07090f'; x.fillRect(0,0,1080,1080);
+  let g1 = x.createRadialGradient(150,80,0,150,80,700);
+  g1.addColorStop(0,'rgba(14,116,144,.4)'); g1.addColorStop(1,'rgba(14,116,144,0)');
+  x.fillStyle=g1; x.fillRect(0,0,1080,1080);
+  let g2 = x.createRadialGradient(950,1000,0,950,1000,750);
+  g2.addColorStop(0,'rgba(109,40,217,.38)'); g2.addColorStop(1,'rgba(109,40,217,0)');
+  x.fillStyle=g2; x.fillRect(0,0,1080,1080);
+  x.textAlign='center';
+  x.fillStyle='#9aa3b5';
+  x.font='600 26px Unbounded, sans-serif';
+  x.fillText('БЛАГОТВОРИТЕЛЕН ВОЛЕЙБОЛЕН ТУРНИР', 540, 108);
+  const tg = x.createLinearGradient(200,0,880,0);
+  tg.addColorStop(0,'#fde68a'); tg.addColorStop(.5,'#fbbf24'); tg.addColorStop(1,'#f0abfc');
+  x.fillStyle=tg;
+  x.font='800 52px Unbounded, sans-serif';
+  x.fillText('„В подкрепа на Пепи“ ❤️', 540, 182);
+  x.fillStyle='#67e8f9';
+  x.font='800 30px Inter, sans-serif';
+  x.fillText(label, 540, 272);
+  const fit = (text,max,base)=>{
+    let size = base;
+    do{ x.font=`800 ${size}px Unbounded, sans-serif`; if(x.measureText(text).width<=max) break; size-=4; }while(size>26);
+  };
+  const winA = w.a>w.b;
+  x.fillStyle = winA? '#34d399' : '#eef1f7';
+  fit(a, 960, 62); x.fillText(a, 540, 424);
+  const sg = x.createLinearGradient(380,0,700,0);
+  sg.addColorStop(0,'#67e8f9'); sg.addColorStop(1,'#a78bfa');
+  x.fillStyle = sg;
+  x.font='800 150px Unbounded, sans-serif';
+  x.fillText(`${w.a} : ${w.b}`, 540, 614);
+  x.fillStyle = !winA? '#34d399' : '#eef1f7';
+  fit(b, 960, 62); x.fillText(b, 540, 784);
+  x.fillStyle='#9aa3b5';
+  x.font='700 40px Inter, sans-serif';
+  x.fillText(res.sets.map(s=>`${s.a}:${s.b}`).join('  ·  '), 540, 876);
+  x.fillStyle='rgba(255,255,255,.35)';
+  x.font='600 26px Inter, sans-serif';
+  x.fillText(`🏐 ${new Date().toLocaleDateString('bg')} · Live резултати и класиране`, 540, 990);
+  c.toBlob(async blob=>{
+    if(!blob){ toast('⚠️ Грешка при създаване на картинката'); return; }
+    const file = new File([blob], 'rezultat.png', {type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:`${a} ${w.a}:${w.b} ${b}`}); return; }
+      catch(e){ if(e.name==='AbortError') return; }
+    }
+    const u = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href=u; link.download=`rezultat-${ref.id}.png`; link.click();
+    URL.revokeObjectURL(u);
+    toast('📤 Картинката е свалена');
+  },'image/png');
+}
+
+/* ================= MODAL (organizer) ================= */
 let modalRef = null;
+function setTarget(kind,i){ return kind==='po' ? (i===2?15:21) : 15; }
 function openModal(ref){
   modalRef = ref;
   let a,b,title,sub,existing;
@@ -711,7 +1144,7 @@ function openModal(ref){
   } else {
     const p = poParticipants(ref.id);
     a=p.a.team; b=p.b.team;
-    const lbl = [...PO_ROUNDS.qf,...PO_ROUNDS.sf,...PO_ROUNDS.fin].find(x=>x.id===ref.id).lbl;
+    const lbl = PO_ALL.find(x=>x.id===ref.id).lbl;
     title = `${a} <em style="font-style:normal;color:var(--muted)">vs</em> ${b}`;
     sub = `Плейофи · ${lbl} · сет до 21 т., трети сет до 15 т. (мин. 2 т. разлика)`;
     existing = state.po.results[ref.id];
@@ -743,6 +1176,7 @@ function openModal(ref){
     if(!confirm('Изтриване на резултата?')) return;
     if(modalRef.kind==='group') delete state.results[modalRef.id];
     else delete state.po.results[modalRef.id];
+    cloudDeleteMatch(modalRef.id);
     ui.champCelebrated=false;
     closeModal(); render({smooth:true});
   });
@@ -754,7 +1188,6 @@ function closeModal(){ $('#overlay').classList.remove('on'); document.body.style
 $('#overlay').addEventListener('click',e=>{ if(e.target.id==='overlay') closeModal(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape' && modalRef) closeModal(); });
 
-function setTarget(kind,i){ return kind==='po' ? (i===2?15:21) : 15; }
 function readModalSets(){
   const sets=[]; let ended=false;
   for(let i=0;i<3;i++){
@@ -781,7 +1214,6 @@ function readModalSets(){
 }
 function validateModal(){
   const st=$('#m-status'), save=$('#m-save');
-  // highlight set winners
   for(let i=0;i<3;i++){
     const ia=$(`#s${i}a`), ib=$(`#s${i}b`);
     ia.classList.remove('setw'); ib.classList.remove('setw');
@@ -802,21 +1234,43 @@ function saveResult(){
   if(!r.sets) return;
   if(modalRef.kind==='group'){
     state.results[modalRef.id] = {sets:r.sets};
+    cloudUpsertMatch(modalRef.id, 'group', r.sets);
   } else {
     state.po.results[modalRef.id] = {sets:r.sets, a:modalRef.a, b:modalRef.b};
+    cloudUpsertMatch(modalRef.id, 'po', r.sets, modalRef.a, modalRef.b);
   }
   closeModal();
   render({smooth:true});
   confettiBurst(0.6);
 }
 
+/* ================= ORGANIZER LOGIN ================= */
+$('#lockbtn').addEventListener('click',async ()=>{
+  if(isOrg()){
+    if(confirm('Изход от режим организатор?')){
+      orgPin=''; localStorage.removeItem('vt-pin');
+      sbc = makeClient(''); subscribeRT(); render();
+    }
+    return;
+  }
+  const pin = prompt('PIN за организатор:');
+  if(!pin) return;
+  const test = makeClient(pin.trim());
+  const {error} = await test.from('state').upsert({key:'ping', value:new Date().toISOString()});
+  if(error){ toast('⛔ Грешен PIN'); return; }
+  orgPin = pin.trim();
+  localStorage.setItem('vt-pin', orgPin);
+  sbc = test; subscribeRT(); render();
+  toast('🔑 Здравей, организатор!');
+  confettiBurst(.5);
+});
+
 /* ================= NAV ================= */
 document.querySelectorAll('nav.tabs button').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b===btn));
     document.querySelectorAll('section.view').forEach(v=>v.classList.remove('on'));
-    ui.view = btn.dataset.view;
-    $(`#view-${ui.view}`).classList.add('on');
+    $(`#view-${btn.dataset.view}`).classList.add('on');
     window.scrollTo({top:0});
   });
 });
@@ -830,7 +1284,7 @@ $('#courtseg').querySelectorAll('button').forEach(btn=>{
 
 /* ================= FOOTER ================= */
 $('#btn-export').addEventListener('click',()=>{
-  const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const blob = new Blob([JSON.stringify({results:state.results, po:state.po, startAt:state.startAt},null,2)],{type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `volley-tournament-${new Date().toISOString().slice(0,10)}.json`;
@@ -840,23 +1294,35 @@ $('#btn-import').addEventListener('click',()=>$('#importFile').click());
 $('#importFile').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f) return;
   const rd=new FileReader();
-  rd.onload=()=>{
+  rd.onload=async ()=>{
     try{
       const s=JSON.parse(rd.result);
       if(!s||typeof s.results!=='object') throw 0;
-      if(!s.po) s.po={draw:null,results:{}};
-      state=s; ui.champCelebrated=false; saveState(); render();
-      alert('Данните са импортирани успешно ✔');
-    }catch(_){ alert('Невалиден файл'); }
+      state.results=s.results; state.po=s.po||{draw:null,results:{}}; state.startAt=s.startAt||null;
+      const rows=[];
+      for(const id in state.results) rows.push({id, kind:'group', sets:state.results[id].sets, a:null, b:null});
+      for(const id in state.po.results){ const r=state.po.results[id]; rows.push({id, kind:'po', sets:r.sets, a:r.a, b:r.b}); }
+      const del = await sbc.from('matches').delete().neq('id','');
+      if(del.error) throw del.error;
+      if(rows.length){ const {error}=await sbc.from('matches').upsert(rows); if(error) throw error; }
+      await cloudSetState('po_draw', state.po.draw);
+      if(state.startAt) await cloudSetState('start_at', state.startAt);
+      ui.champCelebrated=false; saveMirror(); render();
+      toast('✔ Данните са импортирани и синхронизирани');
+    }catch(err){ console.error(err); toast('⚠️ Невалиден файл или грешка при запис'); }
   };
   rd.readAsText(f); e.target.value='';
 });
-$('#btn-reset').addEventListener('click',()=>{
-  if(!confirm('Това ще изтрие ВСИЧКИ резултати и жребия. Сигурен ли си?')) return;
+$('#btn-reset').addEventListener('click',async ()=>{
+  if(!confirm('Това ще изтрие ВСИЧКИ резултати и жребия ЗА ВСИЧКИ устройства. Сигурен ли си?')) return;
   if(!confirm('Наистина ли? Няма връщане назад (освен ако нямаш експорт).')) return;
-  state = { results:{}, po:{draw:null,results:{}} };
+  state = { results:{}, po:{draw:null,results:{}}, startAt:state.startAt };
   ui.champCelebrated=false;
-  saveState(); render();
+  const {error} = await sbc.from('matches').delete().neq('id','');
+  if(error){ cloudError(error); return; }
+  await cloudSetState('po_draw', null);
+  saveMirror(); render();
+  toast('🗑 Турнирът е нулиран');
 });
 
 /* ================= CONFETTI ================= */
@@ -892,7 +1358,21 @@ function fxTick(){
 }
 
 /* ================= INIT ================= */
-render();
+(async function init(){
+  loadMirror();
+  render();
+  try{
+    await cloudLoad();
+    setLive(true);
+    saveMirror();
+    render();
+    subscribeRT();
+  }catch(e){
+    console.error(e);
+    setLive(false);
+    toast('⚠️ Няма връзка със сървъра — показани са локални данни');
+  }
+})();
 </script>
 </body>
 </html>
