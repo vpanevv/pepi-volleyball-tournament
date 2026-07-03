@@ -319,6 +319,45 @@ table.st .diff.pos-d{color:var(--win)} table.st .diff.neg-d{color:var(--lose)}
 .mnames{display:grid;grid-template-columns:64px 1fr 26px 1fr;gap:8px;margin-bottom:8px}
 .mnames span{font-size:11px;font-weight:800;color:var(--muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+/* ---- splash (QR landing) ---- */
+#splash{
+  position:fixed;inset:0;z-index:180;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% -20%,#13223d 0%,#07090f 62%);
+  padding:24px;overflow-y:auto;
+}
+#splash.on{display:flex}
+.sp-inner{max-width:470px;width:100%;text-align:center;padding:10px 0;margin:auto}
+.sp-imgwrap{position:relative;border-radius:26px;isolation:isolate;animation:spPop .9s cubic-bezier(.2,.9,.3,1.18) both}
+.sp-imgwrap::before{
+  content:"";position:absolute;inset:-4px;border-radius:30px;z-index:-1;
+  background:linear-gradient(120deg,#22d3ee,#a78bfa,#fbbf24,#22d3ee);background-size:300% 300%;
+  animation:spGlow 4s linear infinite;filter:blur(11px);opacity:.75;
+}
+@keyframes spGlow{to{background-position:300% 0}}
+.sp-img{display:block;width:100%;border-radius:26px;border:1px solid rgba(255,255,255,.25);box-shadow:0 30px 90px -20px rgba(0,0,0,.85)}
+@keyframes spPop{from{opacity:0;transform:scale(.72) translateY(46px)}60%{opacity:1}to{opacity:1;transform:scale(1) translateY(0)}}
+.sp-cta{
+  margin-top:30px;width:100%;padding:20px 16px;font-size:17px;border-radius:18px;
+  background:linear-gradient(92deg,#fde047,#f59e0b);color:#1c1400;
+  box-shadow:0 10px 34px -8px rgba(250,204,21,.55);
+  animation:fadeUp .6s .45s ease both, spPulse 2.2s 1.4s ease-in-out infinite;
+}
+@keyframes spPulse{50%{transform:scale(1.035);box-shadow:0 14px 44px -8px rgba(250,204,21,.75)}}
+.sp-skip{
+  appearance:none;border:0;background:transparent;color:var(--muted);font-family:var(--font-body);
+  font-size:14px;font-weight:700;margin-top:20px;cursor:pointer;padding:10px;
+  animation:fadeUp .6s .85s ease both;
+}
+.sp-skip:hover{color:var(--text)}
+.sp-success{animation:spPop .7s cubic-bezier(.2,.9,.3,1.15) both;padding:30px 6px}
+.sp-success .ok{font-size:76px;animation:bounceCup 1.6s ease-in-out infinite}
+.sp-success h2{font-family:var(--font-head);font-weight:800;font-size:clamp(21px,5.4vw,30px);margin:20px 0 14px;background:linear-gradient(92deg,#4ade80,#34d399);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sp-success p{color:var(--text);font-size:16px;font-weight:600;line-height:1.6}
+.sp-success .sp-note{color:var(--muted);font-size:13px;font-weight:600;margin-top:24px}
+.sp-success .sp-bar{height:5px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden;margin-top:12px}
+.sp-success .sp-bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#22d3ee,#a78bfa);animation:spBar 4.2s linear .1s forwards}
+@keyframes spBar{to{width:100%}}
+
 /* ---- toast ---- */
 #toast{
   position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);z-index:300;
@@ -400,6 +439,7 @@ canvas#fx{position:fixed;inset:0;z-index:200;pointer-events:none}
   <div class="modal" id="modal"></div>
 </div>
 <div id="lightbox"></div>
+<div id="splash"></div>
 <div id="toast"></div>
 <input type="file" id="importFile" accept="application/json" style="display:none">
 <input type="file" id="photoFile" accept="image/*" style="display:none">
@@ -1036,8 +1076,9 @@ $('#btn-photo').addEventListener('click',()=>$('#photoFile').click());
 $('#photoFile').addEventListener('change',async e=>{
   const f = e.target.files[0]; e.target.value='';
   if(!f) return;
-  const btn = $('#btn-photo');
+  const btn = $('#btn-photo'), spc = $('#sp-cta');
   btn.disabled = true; btn.textContent = '⏳ Качване…';
+  if(spc){ spc.disabled = true; spc.textContent = '⏳ Качване…'; }
   try{
     const blob = await compressImage(f);
     const path = `p${Date.now()}-${Math.random().toString(36).slice(2,8)}.jpg`;
@@ -1047,15 +1088,57 @@ $('#photoFile').addEventListener('change',async e=>{
     if(ins.error) throw ins.error;
     if(!photos.some(x=>x.id===ins.data.id)) photos.unshift(ins.data);
     renderGallery();
-    toast('📸 Снимката е качена!');
-    confettiBurst(.5);
+    if(splashMode){ splashSuccess(); }
+    else { toast('📸 Снимката е качена!'); confettiBurst(.5); }
   }catch(err){
     console.error(err);
     toast('⚠️ Качването не успя — провери връзката');
+    if(spc){ spc.disabled = false; spc.textContent = '📸 Качи снимка и спечели награди'; }
   }finally{
     btn.disabled = false; btn.textContent = '📷 Добави снимка';
   }
 });
+
+/* ================= SPLASH (QR landing) ================= */
+const SPLASH_SEEN = 'vt-splash-seen';
+let splashMode = false;
+function showSplash(){
+  splashMode = true;
+  const s = $('#splash');
+  s.innerHTML = `<div class="sp-inner">
+    <div class="sp-imgwrap"><img class="sp-img" src="piri.jpg" alt="PIRI Pool &amp; Bar"></div>
+    <button class="btn sp-cta" id="sp-cta">📸 Качи снимка и спечели награди</button>
+    <div><button class="sp-skip" id="sp-skip">Към програмата и резултатите ›</button></div>
+  </div>`;
+  s.classList.add('on');
+  document.body.style.overflow = 'hidden';
+  $('#sp-cta').addEventListener('click',()=>$('#photoFile').click());
+  $('#sp-skip').addEventListener('click',closeSplash);
+}
+function closeSplash(){
+  try{ sessionStorage.setItem(SPLASH_SEEN,'1'); }catch(e){}
+  splashMode = false;
+  const s = $('#splash');
+  s.style.transition = 'opacity .5s'; s.style.opacity = '0';
+  setTimeout(()=>{
+    s.classList.remove('on'); s.innerHTML = '';
+    s.style.opacity = ''; s.style.transition = '';
+    document.body.style.overflow = '';
+  }, 500);
+}
+function splashSuccess(){
+  const inner = $('#splash .sp-inner');
+  if(!inner) return;
+  inner.innerHTML = `<div class="sp-success">
+    <div class="ok">🎉</div>
+    <h2>Успешно качихте снимката!</h2>
+    <p>На края на деня очаквайте дали сте спечелили 🎁</p>
+    <p class="sp-note">Пренасочваме те към програмата и резултатите…</p>
+    <div class="sp-bar"><i></i></div>
+  </div>`;
+  confettiBurst(1.6);
+  setTimeout(closeSplash, 4400);
+}
 
 /* ================= SHARE CARDS ================= */
 async function shareCard(ref){
@@ -1359,6 +1442,9 @@ function fxTick(){
 
 /* ================= INIT ================= */
 (async function init(){
+  let splashSeen = false;
+  try{ splashSeen = !!sessionStorage.getItem(SPLASH_SEEN); }catch(e){}
+  if(!splashSeen && !isOrg()) showSplash();
   loadMirror();
   render();
   try{
